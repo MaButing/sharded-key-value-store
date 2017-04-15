@@ -1,5 +1,6 @@
 #include <cerrno>
 #include <cstring>
+#include <string>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,6 +40,6 @@ public:
     int comm_send(int dest_id, void* buff, size_t buff_size);
     int comm_recv(int* source_id, void* buff, size_t buff_size);
     int comm_close();
-    int comm_sendOut(const string& ip_str, int port, void* buff, size_t buff_size);
+    int comm_sendOut(const std::string& ip_str, int port, void* buff, size_t buff_size);
     
 };

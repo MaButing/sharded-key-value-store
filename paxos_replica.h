@@ -43,8 +43,8 @@ private:
 	int update_log(const order_t& ord);
 	int accept_learn(const order_t& ord, int source_id);//on receiving a PROPOSAL
 	int process();
-	virtual int exec(const order_t& ord);
-	virtual int reply(const request_t& req, int code);
+	virtual int exec(order_t& ord);
+	virtual int reply(const request_t& req);
 	int coup();
 	int follow(int new_king, int reprop_begin); //on receiving OLDKINGISDEAD
 	int admit(int new_king, int follower, const vector<order_t>& hist); //on receiving LONGLIVETHEKING

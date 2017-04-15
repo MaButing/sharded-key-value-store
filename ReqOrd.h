@@ -10,37 +10,6 @@ using std::to_string;
 
 
 
-
-
-//ORD:<view>:<seq>:req.str()
-struct order_t
-{
-	int view;
-	int seq;
-	request_t req;
-
-	order_t():view(-1),seq(-1){};
-	order_t(const string& str) 
-	{
-		int pos0 = str.find(":");
-		if (str.substr(0,pos0) != "ORD")
-			return;		
-
-		int pos1 = str.find(":", pos0+1);
-		view = stoi(str.substr(pos0+1, pos1-pos0-1));
-
-		int pos2 = str.find(":", pos1+1);
-		seq = stoi(str.substr(pos1+1, pos2-pos1-1));
-
-		req = request_t(str.substr(pos2+1));
-	}
-	string str() const
-	{
-		return "ORD:"+to_string(view) +":"+ to_string(seq) +":"+ req.str();
-	}
-};
-
-
 //REQ:<client_id>:<client_seq>:<client_ip>:<client_port>:op.str()
 struct request_t
 {
@@ -81,6 +50,37 @@ struct request_t
 	{return client_id == req.client_id && client_seq == req.client_seq;}
 };
 
+
+//ORD:<view>:<seq>:req.str()
+struct order_t
+{
+	int view;
+	int seq;
+	request_t req;
+
+	order_t():view(-1),seq(-1){};
+	order_t(const string& str) 
+	{
+		int pos0 = str.find(":");
+		if (str.substr(0,pos0) != "ORD")
+			return;		
+
+		int pos1 = str.find(":", pos0+1);
+		view = stoi(str.substr(pos0+1, pos1-pos0-1));
+
+		int pos2 = str.find(":", pos1+1);
+		seq = stoi(str.substr(pos1+1, pos2-pos1-1));
+
+		req = request_t(str.substr(pos2+1));
+	}
+	string str() const
+	{
+		return "ORD:"+to_string(view) +":"+ to_string(seq) +":"+ req.str();
+	}
+};
+
+
+
 // what is in req.msg
 // from master to shard:
 // msg = op.str()|<> = <ip>:<port>:<op>:<content>|<>
@@ -115,7 +115,7 @@ struct op_t
 	}
 	string str() const
 	{
-		return ip_str+":"+to_string(port)+":"+op+":"+content;
+		return ip_str+":"+to_string(port)+":"+type+":"+content;
 	}
 
 };
@@ -145,8 +145,11 @@ struct resp_t
 
 		content = str.substr(pos0+1);
 	}
-
-} 
+	string str() const
+	{
+		return to_string(code)+":"+content;
+	}
+};
 
 
 #endif

@@ -2,14 +2,14 @@
 #include <iostream>
 #include <string>
 
-#include "paxos_replica.h"
+#include "shard.h"
 
 using namespace std;
 
 int main(int argc, char const *argv[])
 {
-	if (argc != 5){
-		cerr<<"usage: "<<argv[0]<<" <n> <f> <id> <x>"<<endl;
+	if (argc != 7){
+		cerr<<"usage: "<<argv[0]<<" <n> <f> <id> <x> <begin> <end>"<<endl;
 		return 0;
 	}
 	
@@ -17,8 +17,10 @@ int main(int argc, char const *argv[])
 	int f = stoi(argv[2]);
 	int id = stoi(argv[3]);
 	int x = stoi(argv[4]);
+	int begin = stoi(argv[5]);
+	int end = stoi(argv[6]);
 
-	paxos_replica server(n, f, id, x);
+	shard server(n, f, id, x);
 
 
 	vector<sockaddr_in> addr_list;

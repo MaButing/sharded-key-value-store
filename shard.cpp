@@ -14,12 +14,12 @@ int shard::exec(order_t& ord) //overriden
 
 		size_t hash = hash_fn(key);
 		if (hash >= begin && hash <= end){//with in range
-			if (map.count(key) == 0){// key not exist
+			if (table.count(key) == 0){// key not exist
 				resp.code = -1;
 			}
 			else{
 				resp.code = 0;
-				resp.content = map.at(key);
+				resp.content = table.at(key);
 			}
 		}
 		else{//out of range
@@ -46,7 +46,7 @@ int shard::exec(order_t& ord) //overriden
 
 		size_t hash = hash_fn(key);
 		if (hash >= begin && hash <= end){//with in range
-			if (map.count(key) == 0){// key not exist
+			if (table.count(key) == 0){// key not exist
 				resp.code = -1;
 			}
 			else{
@@ -81,7 +81,7 @@ int shard::exec(order_t& ord) //overriden
 		while (!list.empty()){
 			int pos0 = list.find(':');
 			string key = list.substr(0,pos);
-			int pos1 = list.find(':', pos0+1)
+			int pos1 = list.find(':', pos0+1);
 			string value = list.substr(pos0+1, pos1-pos0-1);
 			list = list.substr(pos1+1);
 
@@ -105,19 +105,16 @@ int shard::exec(order_t& ord) //overriden
 
 	paxos_replica::exec(ord);
 
-	//process ord.msg
+	return resp.code;
 
 }
 
 
 //REPLY:<shard_id(end)>:<king>:<req.str()>
-int shard::reply(const request_t& req, int code)//overriden
+int shard::reply(const request_t& req)//overriden
 {
 	string str = "REPLY:"+to_string(end)+":"+to_string(my_king)+":"+req.str();
 
-	int pos = str.find('|');
-	op_t op(str.substr(0, pos));
-
-	comm.comm_sendOut(req.client_ip_str, client_port, str.c_str(), str.size()+1);
+	return comm.comm_sendOut(req.client_ip_str, req.client_port, (void*)str.c_str(), str.size()+1);
 
 }

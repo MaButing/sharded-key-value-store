@@ -135,7 +135,7 @@ int communicator::comm_recv(int* source_id, void* buff, size_t buff_size)
     
 }
 
-int communicator::comm_sendOut(const string& ip_str, int port, void* buff, size_t buff_size)
+int communicator::comm_sendOut(const std::string& ip_str, int port, void* buff, size_t buff_size)
 {
     if (buff_size > MAXSENDSIZE){
         cerr << "[COMM-Error, buff_size error], MAXSENDSIZE is "<<MAXSENDSIZE<<endl;
