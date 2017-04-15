@@ -239,9 +239,9 @@ int paxos_replica::process()
 	{
 		if (log[i].view < my_king) break;//???do not exec outdated log
 		if (certf[i].size() >= (size_t)f+1){
-			exec(log[i]);
+			int code = exec(log[i]);
 			if (id == my_king && !(log[i].req == request_t())) 
-				reply(log[i].req);//if I am the king
+				reply(log[i].req, code);//if I am the king
 			exe_end++;
 		}
 		else
@@ -266,7 +266,7 @@ int paxos_replica::exec(const order_t& ord)
 }
 
 //REQUESTDONE:<king>:<client_id>:<client_seq>
-int paxos_replica::reply(const request_t& req)
+int paxos_replica::reply(const request_t& req, int code)
 {
 	cout<<"reply "<<req.str()<<endl;
 	sockaddr_in clientaddr;

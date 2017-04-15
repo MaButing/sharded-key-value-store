@@ -135,6 +135,56 @@ int communicator::comm_recv(int* source_id, void* buff, size_t buff_size)
     
 }
 
+int communicator::comm_sendOut(const string& ip_str, int port, void* buff, size_t buff_size)
+{
+    if (buff_size > MAXSENDSIZE){
+        cerr << "[COMM-Error, buff_size error], MAXSENDSIZE is "<<MAXSENDSIZE<<endl;
+        return -1;
+    }
+
+    int sock_send;
+    if( (sock_send = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        cerr << "[COMM-Error, create socket error]: "<<strerror(errno)<<"(errno: "<<errno<<")"<<endl;
+        return -1;
+    }
+
+    sockaddr_in destaddr;
+    memset(&destaddr, 0, sizeof(sockaddr_in));
+    destaddr.sin_family = AF_INET;
+    destaddr.sin_port = htons(port);
+    inet_pton(AF_INET, ip_str.c_str(), &(destaddr.sin_addr));
+
+    if( connect(sock_send, (sockaddr*)&destaddr, sizeof(sockaddr)) < 0){
+        cerr << "[COMM-Error, connect error]: "<<strerror(errno)<<"(errno: "<<errno<<")"<<endl;
+        return -1;
+    }
+
+    //send msg_len
+    size_t msg_len = buff_size+sizeof(size_t)+sizeof(int);
+    int send_len = send(sock_send, &msg_len, sizeof(size_t), MSG_NOSIGNAL);
+    if (send_len < 0){
+        cerr << "[COMM-Error, send msg_size error]: "<<strerror(errno)<<"(errno: "<<errno<<")"<<endl;
+        return -1;
+    }
+    //send source_id
+    send_len = send(sock_send, &id, sizeof(int), MSG_NOSIGNAL);
+    if (send_len < 0){
+        cerr << "[COMM-Error, send sourse_id error]: "<<strerror(errno)<<"(errno: "<<errno<<")"<<endl;
+        return -1;
+    }
+    //send buff
+    send_len = send(sock_send, buff, buff_size, MSG_NOSIGNAL);
+    if (send_len < 0){
+        cerr << "[COMM-Error, send buff error]: "<<strerror(errno)<<"(errno: "<<errno<<")"<<endl;
+        return -1;
+    }
+    
+
+    close(sock_send);
+    return msg_len;
+}
+
+
 int communicator::comm_close(){
     close(sock);
     return 0;
