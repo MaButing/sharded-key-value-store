@@ -117,6 +117,10 @@ struct op_t
 	{
 		return ip_str+":"+to_string(port)+":"+type+":"+content;
 	}
+	bool operator==(const op_t& x)
+	{
+		return ip_str == x.ip_str && port == x.port && type == x.type && content == x.content;
+	}
 
 };
 

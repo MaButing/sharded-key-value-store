@@ -8,7 +8,7 @@ struct shard_info_t
 {
 
 	size_t begin, end;//responsible for key in [begin,end], end is where is shard locate.
-	int n, f, king;//king is the primary_id
+	int n, king;//king is the primary_id
 	vector<sockaddr_in> addr_list;
 };
 
@@ -38,24 +38,23 @@ private:
 	std::vector<record_t> log;
 
 	string master_ip_str;
-	int master_port;
-	communicator comm;
+	int master_port, temp_port;
+	communicator comm_client;
 
-	//run in each thread
-	int master_send(const string& str, size_t shard_id);
-	// only responsible to send to shard
+	int master_handle();
 
-
+	size_t key2shard(const string& key);
 
 public:
 	master(const string& ip_str, int port):
 	master_ip_str(ip_str),
 	master_port(port)
 	// comm(1, 0) //default
-	{};
+	{temp_port = master_port+1;};
 	~master();
 	int master_init(const shard_info_t& initShard);
 	int master_run();
+	
 	int master_close();
 
 	

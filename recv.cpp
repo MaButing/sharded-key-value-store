@@ -25,8 +25,10 @@ int main(int argc, char const *argv[])
     char buff[MAXBUFFSIZE];
     int source_id;
     while(1){
-	    comm.comm_recv(&source_id, (void*)buff, MAXBUFFSIZE);
-	    cout<<source_id<<":"<<buff<<endl;
+	    if (comm.comm_recv(&source_id, (void*)buff, MAXBUFFSIZE, 5) == 0)
+            cout << "timeout"<<endl;
+        else
+	       cout<<source_id<<":"<<buff<<endl;
 	}
 
 	return 0;
