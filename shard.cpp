@@ -59,20 +59,25 @@ int shard::exec(order_t& ord) //overriden
 		}
 	}
 	else if (op.type == "CUT"){
-		size_t x = stoul(op.content);
+		int pos = op.content.find(':');
+		size_t cut_begin = stoul(op.content.substr(0,pos));
+		size_t cut_end = stoul(op.content.substr(pos+1));
 
-		if (x < begin || x >= end){
-			resp.code = -3;
-		}
-		else{
+		
+		if (cut_begin == begin && cut_end < end)
+		{
 			for (auto it = table.begin(); it != table.end(); ++it){
-				if (hash_fn(it->first) < x){
+				size_t hash = hash_fn(it->first);
+				if (hash >= cut_begin && hash <= cut_end){
 					resp.content += it->first+":"+it->second+":";
 					//remove
 				}
 			}
 			resp.code = 0;
-			begin = x;
+			begin = cut_end+1;
+		}
+		else{
+			resp.code = -3;
 		}
 	}
 	else if (op.type == "INIT"){

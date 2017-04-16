@@ -16,7 +16,7 @@ using std::set;
 
 class paxos_replica
 {
-private:
+protected:
 	int n;
 	int f;
 	int id;

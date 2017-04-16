@@ -42,8 +42,8 @@ int paxos_replica::repl_run()
 
 		size_t pos0 = str.find(":");
 		string type = str.substr(0, pos0);
-		//CLIENTREQ:request_str
-		if (type == "CLIENTREQ"){
+		//MASTERREQ:request_str
+		if (type == "MASTERREQ"){
 			string req_str = str.substr(pos0+1);
 			request_t req(req_str);
 			assert(source_id == -1*req.client_id);

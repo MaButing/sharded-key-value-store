@@ -94,7 +94,7 @@ struct op_t
 	// PUT:<key>:<value>
 	// GET:<key>
 	// DEL:<key>
-	// CUT:<pos>
+	// CUT:<begin>:<end>
 	// INIT:{<key>:<value>}
 
 	op_t():port(0){};
