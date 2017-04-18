@@ -1,10 +1,12 @@
 #include "master.h"
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
 int master::master_init(const shard_info_t& initShard)
 {
+	cerr << initShard.begin<<" "<<initShard.end<<" "<<size_t(-1)<<endl;
 	if (initShard.begin != 0 || initShard.end != size_t(-1))
 		return -1;
 	
@@ -62,10 +64,10 @@ int master::master_handle(const string& str)
 
 	//parse request string
 	size_t pos1 = str.find(":", pos0+1);
-	size_t id = stoi(str.substr(pos0+1, pos1-pos0-1));
+	size_t client_id = stoi(str.substr(pos0+1, pos1-pos0-1));
 
 	size_t pos2 = str.find(":", pos1+1);
-	size_t seq = stoi(str.substr(pos1+1, pos2-pos1-1));
+	size_t client_seq = stoi(str.substr(pos1+1, pos2-pos1-1));
 
 	string op_str = str.substr(pos2+1);
 
@@ -94,8 +96,8 @@ int master::master_handle(const string& str)
 
 	// prepare request string
 	request_t req;
-	req.client_id = id;
-	req.client_seq = seq;
+	req.client_id = client_id;
+	req.client_seq = client_seq;
 	req.client_ip_str = master_ip_str;
 	req.client_port = port;
 	req.msg = op_str;
@@ -152,7 +154,7 @@ int master::master_handle(const string& str)
 		// if (reply_str.substr(0, pos0) != "REPLY")
 		// 	continue;
 		size_t pos1 = reply_str.find(':', pos0+1);
-		assert(shard_id == stoul(reply_str.substr(pos0+1, pos1-pos0-1)));
+		assert(shard_id == stoull(reply_str.substr(pos0+1, pos1-pos0-1)));
 		size_t pos2 = reply_str.find(':', pos1+1);
 		int new_king = stoi(reply_str.substr(pos1+1, pos2-pos1-1));
 
@@ -183,7 +185,7 @@ int master::master_handle(const string& str)
 			comm_shard.comm_sendOut(op.ip_str, op.port,
 				reply_str.c_str(), reply_str.size()+1);
 		}else{
-			size_t shard_id = stoul(op.content.substr(op.content.find(':')+1));
+			size_t shard_id = stoull(op.content.substr(op.content.find(':')+1));
 
 			shard_info_t shard_info = config2info(shard_id);//TODO
 			reply_str = initShard(shard_info, reply_req);
@@ -283,7 +285,7 @@ string master::initShard(shard_info_t shard_info, request_t req)//pass by value
 	// if (reply_str.substr(0, pos0) != "REPLY")
 	// 	continue;
 	size_t pos1 = reply_str.find(':', pos0+1);
-	assert(shard_id == stoul(reply_str.substr(pos0+1, pos1-pos0-1)));
+	assert(shard_id == stoull(reply_str.substr(pos0+1, pos1-pos0-1)));
 	size_t pos2 = reply_str.find(':', pos1+1);
 	int new_king = stoi(reply_str.substr(pos1+1, pos2-pos1-1));
 

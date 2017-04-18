@@ -83,7 +83,7 @@ struct order_t
 
 // what is in req.msg
 // from master to shard:
-// msg = op.str()|<> = <ip>:<port>:<op>:<content>|<>
+// msg = op.str()|<> = <type>:<ip>:<port>:<content>|<>
 struct op_t
 {
 	string ip_str;
@@ -101,13 +101,13 @@ struct op_t
 	op_t(const string & str)
 	{
 		int pos0 = str.find(":");
-		ip_str = str.substr(0,pos0);
+		type = str.substr(0,pos0);
 
 		int pos1 = str.find(":", pos0+1);
-		port = stoi(str.substr(pos0+1, pos1-pos0-1));
+		ip_str = stoi(str.substr(pos0+1, pos1-pos0-1));
 
 		int pos2 = str.find(":", pos1+1);
-		type = str.substr(pos1+1, pos2-pos1-1);
+		port = stoi(str.substr(pos1+1, pos2-pos1-1));
 
 		int pos3 = str.find("|", pos2+1);
 		content = str.substr(pos2+1, pos3-pos2-1);
@@ -115,7 +115,7 @@ struct op_t
 	}
 	string str() const
 	{
-		return ip_str+":"+to_string(port)+":"+type+":"+content;
+		return type+":"+ip_str+":"+to_string(port)+":"+content;
 	}
 	bool operator==(const op_t& x)
 	{

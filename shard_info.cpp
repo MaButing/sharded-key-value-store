@@ -39,7 +39,7 @@ shard_info_t config2info(size_t shard_id){
 
 // int main(int argc, char const *argv[])
 // {
-// 	size_t id = stoul(argv[1]);
+// 	size_t id = stoull(argv[1]);
 
 // 	config2info(id);
 

@@ -16,7 +16,7 @@ int main(int argc, char const *argv[])
 	}
 	
 	int replica_id = stoi(argv[1]);
-	size_t shard_id = stoul(argv[2]);
+	size_t shard_id = stoull(argv[2]);
 
 	shard_info_t shard_info = config2info(shard_id);
 

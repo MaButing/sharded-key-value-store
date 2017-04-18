@@ -1,12 +1,20 @@
 #include "shard.h"
+#include <cassert>
+#include <iostream>
+
+using namespace std;
 
 int shard::exec(order_t& ord) //overriden
 {
+	assert(ord.view == my_king);
+	cout<<"exec "<<ord.str()<<endl;
 
 	string str = ord.req.msg;
-	int pos = str.find('|');
+	size_t pos = str.find('|');
 
 	op_t op(str.substr(0, pos));
+	cout<<op.str()<<endl;
+
 	resp_t resp;
 
 	if (op.type == "GET"){
@@ -28,11 +36,12 @@ int shard::exec(order_t& ord) //overriden
 
 	}
 	else if (op.type == "PUT"){
-		int pos = op.content.find(':');
+		size_t pos = op.content.find(':');
 		string key = op.content.substr(0,pos);
 		string value = op.content.substr(pos+1);
 
 		size_t hash = hash_fn(key);
+		cout<<begin<<" "<<end<<" "<<hash<<endl;
 		if (hash >= begin && hash <= end){//with in range
 			table[key] = value;
 			resp.code = 0;
@@ -50,6 +59,7 @@ int shard::exec(order_t& ord) //overriden
 				resp.code = -1;
 			}
 			else{
+				resp.content = table.at(key);
 				table.erase(key);
 				resp.code = 0;		
 			}
@@ -59,9 +69,9 @@ int shard::exec(order_t& ord) //overriden
 		}
 	}
 	else if (op.type == "CUT"){
-		int pos = op.content.find(':');
-		size_t cut_begin = stoul(op.content.substr(0,pos));
-		size_t cut_end = stoul(op.content.substr(pos+1));
+		size_t pos = op.content.find(':');
+		size_t cut_begin = stoull(op.content.substr(0,pos));
+		size_t cut_end = stoull(op.content.substr(pos+1));
 
 		
 		if (cut_begin == begin && cut_end < end)
@@ -84,9 +94,9 @@ int shard::exec(order_t& ord) //overriden
 		string list = op.content;
 
 		while (!list.empty()){
-			int pos0 = list.find(':');
+			size_t pos0 = list.find(':');
 			string key = list.substr(0,pos);
-			int pos1 = list.find(':', pos0+1);
+			size_t pos1 = list.find(':', pos0+1);
 			string value = list.substr(pos0+1, pos1-pos0-1);
 			list = list.substr(pos1+1);
 
@@ -118,6 +128,8 @@ int shard::exec(order_t& ord) //overriden
 //REPLY:<shard_id(end)>:<king>:<req.str()>
 int shard::reply(const request_t& req)//overriden
 {
+	cout<<"reply "<<req.str()<<endl;
+
 	string str = "REPLY:"+to_string(end)+":"+to_string(my_king)+":"+req.str();
 
 	return comm.comm_sendOut(req.client_ip_str, req.client_port, (void*)str.c_str(), str.size()+1);

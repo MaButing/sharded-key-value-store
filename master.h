@@ -3,6 +3,7 @@
 #include <mutex>
 #include <thread>
 #include <functional>
+#include <string>
 
 #include "ReqOrd.h"
 #include "shard_info.h"
@@ -29,6 +30,7 @@ private:
 	std::mutex m;
 	// to lock: std::unique_lock<std::mutex> L(m);
 	// to unlock: L.unlock();
+
 	std::hash<std::string> hash_fn;
 
 	//optional

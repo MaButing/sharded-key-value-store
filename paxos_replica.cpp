@@ -46,7 +46,6 @@ int paxos_replica::repl_run()
 		if (type == "MASTERREQ"){
 			string req_str = str.substr(pos0+1);
 			request_t req(req_str);
-			assert(source_id == -1*req.client_id);
 			recv_req(req);
 
 		}
