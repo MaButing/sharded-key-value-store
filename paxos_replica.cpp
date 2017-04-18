@@ -12,10 +12,10 @@ int paxos_replica::repl_init(const vector<sockaddr_in>& addr_list_in)
 	if (comm.comm_init(addr_list_in) != 0)
 		return -1;
 
-	string log_name = "ChatLog_"+to_string(id)+".txt";
-	ofstream ofs(log_name.c_str(), ofstream::out);
-	ofs << "========replica "<<id<<" log=======" << endl;
-	ofs.close();
+	// string log_name = "ChatLog_"+to_string(id)+".txt";
+	// ofstream ofs(log_name.c_str(), ofstream::out);
+	// ofs << "========replica "<<id<<" log=======" << endl;
+	// ofs.close();
 
 	if (n >= 2*f+1)
 		return 0;

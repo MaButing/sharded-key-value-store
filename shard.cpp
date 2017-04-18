@@ -108,7 +108,7 @@ int shard::exec(order_t& ord) //overriden
 	ord.req.msg += "|"+resp.str();
 
 
-	paxos_replica::exec(ord);
+	// paxos_replica::exec(ord);
 
 	return resp.code;
 

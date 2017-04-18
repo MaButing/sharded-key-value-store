@@ -1,22 +1,18 @@
 #include <map>
 #include <vector>
-#include "ReqOrd.h"
 #include <mutex>
 #include <thread>
+#include <functional>
 
-struct shard_info_t
-{
+#include "ReqOrd.h"
+#include "shard_info.h"
+#include "communicator.h"
 
-	size_t begin, end;//responsible for key in [begin,end], end is where is shard locate.
-	int n, king;//king is the primary_id
-	vector<sockaddr_in> addr_list;
-};
-
-struct record_t
-{
-	size_t shard_id;
-	op_t op;
-};
+// struct record_t
+// {
+// 	size_t shard_id;
+// 	op_t op;
+// };
 
 // PUT:<key>:<value>
 // GET:<key>
@@ -33,15 +29,16 @@ private:
 	std::mutex m;
 	// to lock: std::unique_lock<std::mutex> L(m);
 	// to unlock: L.unlock();
+	std::hash<std::string> hash_fn;
 
 	//optional
-	std::vector<record_t> log;
+	// std::vector<record_t> log;
 
 	string master_ip_str;
 	int master_port, temp_port;
 	communicator comm_client;
 
-	int master_handle();
+	string initShard(shard_info_t shard_info, request_t req);
 
 	size_t key2shard(const string& key);
 
@@ -51,13 +48,13 @@ public:
 	master_port(port)
 	// comm(1, 0) //default
 	{temp_port = master_port+1;};
-	~master();
 	int master_init(const shard_info_t& initShard);
 	int master_run();
-	
+	int master_handle(const string& str);
 	int master_close();
 
-	
+	static int handle_helper(master *m, const string& str);
 };
+
 
 

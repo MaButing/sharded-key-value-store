@@ -1,3 +1,8 @@
+#include "master.h"
+#include <cassert>
+
+using namespace std;
+
 int master::master_init(const shard_info_t& initShard)
 {
 	if (initShard.begin != 0 || initShard.end != size_t(-1))
@@ -17,7 +22,7 @@ int master::master_init(const shard_info_t& initShard)
 	std::vector<sockaddr_in> v;
 	v.push_back(masterAddr);
 
-	return x = comm_client.comm_init(v);
+	return comm_client.comm_init(v);
 }
 
 int master::master_run()
@@ -29,10 +34,10 @@ int master::master_run()
 	    	string str(buff);
 	    	// CLIENTREQ:<id>:<seq>:<op.str()>
 
-	    	int pos0 = str.find(":");
+	    	size_t pos0 = str.find(":");
 			if (str.substr(0,pos0) != "CLIENTREQ") continue;
 
-            thread t(master_handle, str);
+            thread t(master::handle_helper, this, str);
         	t.detach();
         }
         else{
@@ -42,19 +47,25 @@ int master::master_run()
 	}
 }
 
+int master::handle_helper(master* m, const string& str)
+{
+	return m->master_handle(str);
+}
+
+
 int master::master_handle(const string& str)
 {
 
 	// CLIENTREQ:<client_id>:<client_seq>:<op_str>
-	int pos0 = str.find(":");
+	size_t pos0 = str.find(":");
 	if (str.substr(0,pos0) != "CLIENTREQ") return -1;
 
 	//parse request string
-	int pos1 = str.find(":", pos0+1);
-	int id = stoi(str.substr(pos0+1, pos1-pos0-1));
+	size_t pos1 = str.find(":", pos0+1);
+	size_t id = stoi(str.substr(pos0+1, pos1-pos0-1));
 
-	int pos2 = str.find(":", pos1+1);
-	int seq = stoi(str.substr(pos1+1, pos2-pos1-1));
+	size_t pos2 = str.find(":", pos1+1);
+	size_t seq = stoi(str.substr(pos1+1, pos2-pos1-1));
 
 	string op_str = str.substr(pos2+1);
 
@@ -92,7 +103,7 @@ int master::master_handle(const string& str)
 
 	//communicate to shard
 	op_t op(op_str);
-	string key = op.content.sub_str(0, op.content.find(':'));// <begin> if op.type == CUT
+	string key = op.content.substr(0, op.content.find(':'));// <begin> if op.type == CUT
 	
 
 	string reply_str;
@@ -105,7 +116,7 @@ int master::master_handle(const string& str)
 
 		std::unique_lock<std::mutex> L(m);
 		shard_info_t shard_info = shardList[shard_id];
-		L.unlock()
+		L.unlock();
 
 		int timeout_sec = 5;
 
@@ -124,10 +135,10 @@ int master::master_handle(const string& str)
 				timeout_sec *=2;
 				
 				std::unique_lock<std::mutex> L(m);
-					if (++shard_info.king >= n)
+					if (++shard_info.king >= shard_info.n)
 						shard_info.king = 0;
 					shardList[shard_id].king = shard_info.king;
-				L.unlock()
+				L.unlock();
 				
 				continue;
 			}
@@ -136,29 +147,29 @@ int master::master_handle(const string& str)
 		reply_str = string(buff);
 
 		//process reply
-		int pos0 = reply_str.find(':');
-		assert(reply_str.sub_str(0, pos0) == "REPLY");
-		// if (reply_str.sub_str(0, pos0) != "REPLY")
+		size_t pos0 = reply_str.find(':');
+		assert(reply_str.substr(0, pos0) == "REPLY");
+		// if (reply_str.substr(0, pos0) != "REPLY")
 		// 	continue;
-		int pos1 = reply_str.find(':', pos0+1);
-		assert(shard_id == stoi(reply_str.sub_str(pos0+1, pos1-pos0-1)));
-		int pos2 = reply_str.find(':', pos1+1);
-		int new_king = stoi(reply_str.sub_str(pos1+1, pos2-pos1-1));
+		size_t pos1 = reply_str.find(':', pos0+1);
+		assert(shard_id == stoul(reply_str.substr(pos0+1, pos1-pos0-1)));
+		size_t pos2 = reply_str.find(':', pos1+1);
+		int new_king = stoi(reply_str.substr(pos1+1, pos2-pos1-1));
 
 		if (new_king != shard_info.king){
 			std::unique_lock<std::mutex> L(m);
 				shardList[shard_id].king = new_king;
-			L.unlock()
+			L.unlock();
 		}
 
-		reply_req = request_t(reply_str.sub_str(pos2+1));
+		reply_req = request_t(reply_str.substr(pos2+1));
 
-		int pos = reply_req.msg.find('|');
+		size_t pos = reply_req.msg.find('|');
 		assert(pos != string::npos);
-		reply_op = op_t(reply_req.msg.sub_str(0,pos));
-		reply_resp = resp_t(reply_req.msg.sub_str(pos+1));
+		reply_op = op_t(reply_req.msg.substr(0,pos));
+		reply_resp = resp_t(reply_req.msg.substr(pos+1));
 
-	}while(reply_resp.code == -2) // key out of range
+	}while(reply_resp.code == -2); // key out of range
 
 	assert(reply_op == op);
 
@@ -172,9 +183,10 @@ int master::master_handle(const string& str)
 			comm_shard.comm_sendOut(op.ip_str, op.port,
 				reply_str.c_str(), reply_str.size()+1);
 		}else{
+			size_t shard_id = stoul(op.content.substr(op.content.find(':')+1));
 
-			shard_info = config2info();//TODO
-			reply_str = initShard(shard_info, reply_req.msg);
+			shard_info_t shard_info = config2info(shard_id);//TODO
+			reply_str = initShard(shard_info, reply_req);
 			comm_shard.comm_sendOut(op.ip_str, op.port,
 				reply_str.c_str(), reply_str.size()+1);
 		}
@@ -184,16 +196,14 @@ int master::master_handle(const string& str)
 	comm_shard.comm_close();
 }
 
-shard_info_t config2info(size_t shard_id)
-{
 
-}
-
-string initShard(const shard_info_t& shard_info, request_t req)
+string master::initShard(shard_info_t shard_info, request_t req)//pass by value
 {
 	//add shard to shardList
+	size_t shard_id = shard_info.end;
+
 	std::unique_lock<std::mutex> L(m);
-		shardList[shard_info.end] = shard_info;
+		shardList[shard_id] = shard_info;
 	L.unlock();
 
 
@@ -221,12 +231,12 @@ string initShard(const shard_info_t& shard_info, request_t req)
 	}
 
 	//prepare request
-	int pos = req.msg.find('|');
+	size_t pos = req.msg.find('|');
 	assert(pos != string::npos);
-	op_t op(req.msg.sub_str(0,pos));
-	resp_t resp(req.msg.sub_str(pos+1));
+	op_t op(req.msg.substr(0,pos));
+	resp_t resp(req.msg.substr(pos+1));
 
-	op.type = "INIT"
+	op.type = "INIT";
 	op.content = resp.content;
 
 	req.client_port = port;
@@ -256,10 +266,10 @@ string initShard(const shard_info_t& shard_info, request_t req)
 			timeout_sec *=2;
 			
 			std::unique_lock<std::mutex> L(m);
-				if (++shard_info.king >= n)
+				if (++shard_info.king >= shard_info.n)
 					shard_info.king = 0;
 				shardList[shard_id].king = shard_info.king;
-			L.unlock()
+			L.unlock();
 			
 			continue;
 		}
@@ -268,27 +278,27 @@ string initShard(const shard_info_t& shard_info, request_t req)
 	string reply_str(buff);
 
 	//process reply
-	int pos0 = reply_str.find(':');
-	assert(reply_str.sub_str(0, pos0) == "REPLY");
-	// if (reply_str.sub_str(0, pos0) != "REPLY")
+	size_t pos0 = reply_str.find(':');
+	assert(reply_str.substr(0, pos0) == "REPLY");
+	// if (reply_str.substr(0, pos0) != "REPLY")
 	// 	continue;
-	int pos1 = reply_str.find(':', pos0+1);
-	assert(shard_id == stoi(reply_str.sub_str(pos0+1, pos1-pos0-1)));
-	int pos2 = reply_str.find(':', pos1+1);
-	int new_king = stoi(reply_str.sub_str(pos1+1, pos2-pos1-1));
+	size_t pos1 = reply_str.find(':', pos0+1);
+	assert(shard_id == stoul(reply_str.substr(pos0+1, pos1-pos0-1)));
+	size_t pos2 = reply_str.find(':', pos1+1);
+	int new_king = stoi(reply_str.substr(pos1+1, pos2-pos1-1));
 
 	if (new_king != shard_info.king){
 		std::unique_lock<std::mutex> L(m);
 			shardList[shard_id].king = new_king;
-		L.unlock()
+		L.unlock();
 	}
 
-	// request_t reply_req(reply_str.sub_str(pos2+1));
+	// request_t reply_req(reply_str.substr(pos2+1));
 
-	// int pos = reply_req.msg.find('|');
+	// size_t pos = reply_req.msg.find('|');
 	// assert(pos != string::npos);
-	// op_t reply_op(reply_req.msg.sub_str(0,pos));
-	// resp_t reply_resp(reply_req.msg.sub_str(pos+1));
+	// op_t reply_op(reply_req.msg.substr(0,pos));
+	// resp_t reply_resp(reply_req.msg.substr(pos+1));
 
 	comm_shard.comm_close();
 
@@ -300,18 +310,18 @@ size_t master::key2shard(const string& key)
 	size_t hash = hash_fn(key);
 	size_t shard_id;
 	std::unique_lock<std::mutex> L(m);
-	for (const auto& pair: shardList){
+	for (const auto& pair: shardList)
 		if (pair.first > hash){
 			shard_id = pair.first;
 			break;
 		}
 	L.unlock();
 
-	return id;
+	return shard_id;
 }
 
 
 int master::master_close()
 {
-	comm_client.comm_close();
+	return comm_client.comm_close();
 }

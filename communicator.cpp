@@ -37,7 +37,7 @@ int communicator::comm_init(const vector<sockaddr_in>& addr_list_in)
     return 0;
 }
 
-int communicator::comm_send(int dest_id, void* buff, size_t buff_size) const
+int communicator::comm_send(int dest_id, const void* buff, size_t buff_size) const
 {
 	
 	if (buff_size > MAXSENDSIZE){
@@ -84,7 +84,7 @@ int communicator::comm_send(int dest_id, void* buff, size_t buff_size) const
 
 int communicator::comm_recv(int* source_id, void* buff, size_t buff_size, int timeout_sec /*= 0*/) const
 {    
-
+    fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(sock, &rfds);
     timeval to_len = {timeout_sec, 0};
@@ -154,7 +154,7 @@ int communicator::comm_recv(int* source_id, void* buff, size_t buff_size, int ti
     
 }
 
-int communicator::comm_sendOut(const std::string& ip_str, int port, void* buff, size_t buff_size) const
+int communicator::comm_sendOut(const std::string& ip_str, int port, const void* buff, size_t buff_size) const
 {
     if (buff_size > MAXSENDSIZE){
         cerr << "[COMM-Error, buff_size error], MAXSENDSIZE is "<<MAXSENDSIZE<<endl;
@@ -203,7 +203,7 @@ int communicator::comm_sendOut(const std::string& ip_str, int port, void* buff, 
     return msg_len;
 }
 
-int communicator::comm_sendOut(const sockaddr_in& destaddr, void* buff, size_t buff_size) const
+int communicator::comm_sendOut(const sockaddr_in& destaddr, const void* buff, size_t buff_size) const
 {
     if (buff_size > MAXSENDSIZE){
         cerr << "[COMM-Error, buff_size error], MAXSENDSIZE is "<<MAXSENDSIZE<<endl;
