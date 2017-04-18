@@ -1,4 +1,5 @@
 #include "shard.h"
+#include "hash.h"
 #include <cassert>
 #include <iostream>
 

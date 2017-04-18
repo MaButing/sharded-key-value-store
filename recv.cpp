@@ -1,4 +1,5 @@
 #include "communicator.h"
+#include "ReqOrd.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -8,7 +9,7 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
 	string ip_str = "127.0.0.1";
-	int port = 6666;
+	int port = 8000;
 
 	sockaddr_in destaddr;
     memset(&destaddr, 0, sizeof(sockaddr_in));
@@ -25,10 +26,20 @@ int main(int argc, char const *argv[])
     char buff[MAXBUFFSIZE];
     int source_id;
     while(1){
-	    if (comm.comm_recv(&source_id, (void*)buff, MAXBUFFSIZE, 5) == 0)
+	    if (comm.comm_recv(&source_id, (void*)buff, MAXBUFFSIZE) == 0)
             cout << "timeout"<<endl;
         else
-	       cout<<source_id<<":"<<buff<<endl;
+	        cout<<"receiving:"<<buff<<endl;
+        
+        string str(buff);
+        request_t req(str.substr(str.find(':')+1));
+        req.msg += "|0:";
+
+        str = "REPLY:65535:0:"+req.str();
+        cout<<"sending "<<str<<endl;
+        comm.comm_sendOut(req.client_ip_str, req.client_port, str.c_str(), str.size()+1);
+
+
 	}
 
 	return 0;

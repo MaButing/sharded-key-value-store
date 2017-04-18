@@ -2,7 +2,7 @@ readme:
 
 from client to master:
     CLIENTREQ:<client_id>:<client_seq>:<op.type>:<op.ip_str>:<op.port>:<op.content>
-                                      | op.str()   |
+                                      | op.str()                                   |
 from master to shard:
     MASTERREQ:
         REQ:<client_id>:<client_seq>:<master_ip>:<master_port>:<op.type>:<op.ip_str>:<op.port>:<op.content>

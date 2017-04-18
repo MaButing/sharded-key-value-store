@@ -6,8 +6,8 @@ using namespace std;
 
 int master::master_init(const shard_info_t& initShard)
 {
-	cerr << initShard.begin<<" "<<initShard.end<<" "<<size_t(-1)<<endl;
-	if (initShard.begin != 0 || initShard.end != size_t(-1))
+	cerr << initShard.begin<<" "<<initShard.end<<" "<<HASHLIMIT<<endl;
+	if (initShard.begin != 0 || initShard.end != HASHLIMIT)
 		return -1;
 	
 
@@ -35,6 +35,7 @@ int master::master_run()
 	    if (comm_client.comm_recv(&source_id, (void*)buff, MAXBUFFSIZE) > 0){
 	    	string str(buff);
 	    	// CLIENTREQ:<id>:<seq>:<op.str()>
+	    	cout<<"receiving: "<<str<<endl;
 
 	    	size_t pos0 = str.find(":");
 			if (str.substr(0,pos0) != "CLIENTREQ") continue;
@@ -43,7 +44,7 @@ int master::master_run()
         	t.detach();
         }
         else{
-        	cout << "recving client request error."<<endl;
+        	cout << "receiving client request error."<<endl;
         	continue;
         }
 	}
@@ -130,6 +131,7 @@ int master::master_handle(const string& str)
 			
 			comm_shard.comm_sendOut(shard_info.addr_list[shard_info.king], 
 				req_str.c_str(), req_str.size()+1);
+			cout<<"sending to "<<shard_info.king<<"@"<<shard_id<<": "<<req_str<<endl;
 			
 			int x = comm_shard.comm_recv(&source_id, (void*)buff, MAXBUFFSIZE, timeout_sec);
 
@@ -144,6 +146,8 @@ int master::master_handle(const string& str)
 				
 				continue;
 			}
+			else 
+				break;
 		}
 
 		reply_str = string(buff);
@@ -177,6 +181,7 @@ int master::master_handle(const string& str)
 
 
 	if (op.type != "CUT"){//reply to client
+		cout<<"reply to "<< reply_req.client_seq<<"@"<<reply_req.client_id<<": "<<reply_str<<endl;
 		comm_shard.comm_sendOut(op.ip_str, op.port,
 			reply_str.c_str(), reply_str.size()+1);
 	}
@@ -189,6 +194,8 @@ int master::master_handle(const string& str)
 
 			shard_info_t shard_info = config2info(shard_id);//TODO
 			reply_str = initShard(shard_info, reply_req);
+
+			cout<<"reply to "<< reply_req.client_seq<<"@"<<reply_req.client_id<<": "<<reply_str<<endl;
 			comm_shard.comm_sendOut(op.ip_str, op.port,
 				reply_str.c_str(), reply_str.size()+1);
 		}
@@ -196,6 +203,8 @@ int master::master_handle(const string& str)
 
 
 	comm_shard.comm_close();
+
+	return 0;
 }
 
 
@@ -261,6 +270,7 @@ string master::initShard(shard_info_t shard_info, request_t req)//pass by value
 		
 		comm_shard.comm_sendOut(shard_info.addr_list[shard_info.king], 
 			req_str.c_str(), req_str.size()+1);
+		cout<<"sending to "<<shard_info.king<<"@"<<shard_id<<": "<<req_str<<endl;
 		
 		int x = comm_shard.comm_recv(&source_id, (void*)buff, MAXBUFFSIZE, timeout_sec);
 
@@ -275,6 +285,8 @@ string master::initShard(shard_info_t shard_info, request_t req)//pass by value
 			
 			continue;
 		}
+		else 
+			break;
 	}
 
 	string reply_str(buff);

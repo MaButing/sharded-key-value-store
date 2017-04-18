@@ -2,12 +2,12 @@
 #include <vector>
 #include <mutex>
 #include <thread>
-#include <functional>
 #include <string>
 
 #include "ReqOrd.h"
 #include "shard_info.h"
 #include "communicator.h"
+#include "hash.h"
 
 // struct record_t
 // {
@@ -30,8 +30,6 @@ private:
 	std::mutex m;
 	// to lock: std::unique_lock<std::mutex> L(m);
 	// to unlock: L.unlock();
-
-	std::hash<std::string> hash_fn;
 
 	//optional
 	// std::vector<record_t> log;
