@@ -14,7 +14,7 @@ int shard::exec(order_t& ord) //overriden
 	size_t pos = str.find('|');
 
 	op_t op(str.substr(0, pos));
-	cout<<op.str()<<endl;
+	// cerr<<op.str()<<endl;
 
 	resp_t resp;
 
@@ -93,15 +93,18 @@ int shard::exec(order_t& ord) //overriden
 	}
 	else if (op.type == "INIT"){
 		string list = op.content;
+		// cerr<<"list = "<<list<<endl;
 
 		while (!list.empty()){
 			size_t pos0 = list.find(':');
-			string key = list.substr(0,pos);
+			string key = list.substr(0, pos0);
 			size_t pos1 = list.find(':', pos0+1);
 			string value = list.substr(pos0+1, pos1-pos0-1);
 			list = list.substr(pos1+1);
 
 			size_t hash = hash_fn(key);
+			// cerr<<key<<" "<<value<<" "<<hash<<" "<<list<<endl;
+
 			if (hash >= begin && hash <= end){//with in range
 				table[key] = value;
 			}

@@ -6,7 +6,7 @@ using namespace std;
 
 int master::master_init(const shard_info_t& initShard)
 {
-	cerr << initShard.begin<<" "<<initShard.end<<" "<<HASHLIMIT<<endl;
+	// cerr << initShard.begin<<" "<<initShard.end<<" "<<HASHLIMIT<<endl;
 	if (initShard.begin != 0 || initShard.end != HASHLIMIT)
 		return -1;
 	
@@ -107,6 +107,12 @@ int master::master_handle(const string& str)
 	//communicate to shard
 	op_t op(op_str);
 	string key = op.content.substr(0, op.content.find(':'));// <begin> if op.type == CUT
+	size_t hash;
+	if (op.type == "CUT")
+		hash = stoull(key);
+	else
+		hash = hash_fn(key);
+
 	
 
 	string reply_str;
@@ -115,7 +121,7 @@ int master::master_handle(const string& str)
 	resp_t reply_resp;
 
 	do{
-		size_t shard_id = key2shard(key);
+		size_t shard_id = hash2shard(hash);
 
 		std::unique_lock<std::mutex> L(m);
 		shard_info_t shard_info = shardList[shard_id];
@@ -178,6 +184,8 @@ int master::master_handle(const string& str)
 	}while(reply_resp.code == -2); // key out of range
 
 	assert(reply_op == op);
+
+	cout<<"receiving: "<<reply_str<<endl;
 
 
 	if (op.type != "CUT"){//reply to client
@@ -242,9 +250,11 @@ string master::initShard(shard_info_t shard_info, request_t req)//pass by value
 	}
 
 	//prepare request
+	// cout<<"req in initShard: "<<req.str()<<endl;
 	size_t pos = req.msg.find('|');
 	assert(pos != string::npos);
 	op_t op(req.msg.substr(0,pos));
+	// cout<<"op in initShard: "<<op.str()<<endl;
 	resp_t resp(req.msg.substr(pos+1));
 
 	op.type = "INIT";
@@ -256,12 +266,7 @@ string master::initShard(shard_info_t shard_info, request_t req)//pass by value
 
 
 	//communicate to shard
-	
-
-
 	int timeout_sec = 5;
-
-	
 
 	// send to shard and wait for response
 	char buff[MAXBUFFSIZE];
@@ -319,9 +324,8 @@ string master::initShard(shard_info_t shard_info, request_t req)//pass by value
 	return reply_str;
 }
 
-size_t master::key2shard(const string& key)
+size_t master::hash2shard(size_t hash)
 {
-	size_t hash = hash_fn(key);
 	size_t shard_id;
 	std::unique_lock<std::mutex> L(m);
 	for (const auto& pair: shardList)

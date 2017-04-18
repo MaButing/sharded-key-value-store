@@ -40,7 +40,7 @@ private:
 
 	string initShard(shard_info_t shard_info, request_t req);
 
-	size_t key2shard(const string& key);
+	size_t hash2shard(size_t hash);
 
 public:
 	master(const string& ip_str, int port):

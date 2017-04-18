@@ -7,6 +7,9 @@ master:
 client:
 	g++ client_main.cpp communicator.cpp -o client -Wall -Wextra -std=c++11 -C
 
+autoclient:
+	g++ autoclient_main.cpp communicator.cpp -o autoclient -Wall -Wextra -std=c++11 -C
+
 recv:
 	g++ recv.cpp communicator.cpp -o recv -std=c++11
 

@@ -1,8 +1,13 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
+#include <unistd.h>
 
 #include "communicator.h"
 #include "ReqOrd.h"
+
+
+
 
 
 using namespace std;
@@ -38,13 +43,25 @@ int main(int argc, char const *argv[])
 
     string type, content;
     while(1){
-    	cout<<"input <OPERATION> <content>: "<<endl;
-    	cin >> type >> content;
+    	// cout<<"input <OPERATION> <content>"
+    	// cin >> type >> content;
+
+        int a = rand() % 4;
+        if (a >= 1){// 1/2
+            type = "GET";
+            content = "KEY"+to_string(rand()%10);
+        }
+        else if (a == 0){
+            type = "PUT";
+            content = "KEY"+to_string(rand()%5)+":"+to_string(rand()%1000);
+        }
+        
+
     	op.type = type;
     	op.content = content;
 
     	string req_str = "CLIENTREQ:"+to_string(id)+":"+to_string(seq)+":"+op.str();
-    	cout<<"sending: "<<req_str<<endl;
+    	cout<<op.type<<" "<<op.content<<endl;
     	comm.comm_sendOut(master_ip_str, master_port, req_str.c_str(), req_str.size()+1);
 
     	char buff[MAXBUFFSIZE];
@@ -75,11 +92,10 @@ int main(int argc, char const *argv[])
         	cout<<"CUT out of range "<< resp.content <<endl;
         else if (resp.code == -4)
         	cout<<"unknown error "<< resp.content <<endl;
-
         cout<<endl;
 
         seq++;
-
+        sleep(1);
     }
 
 

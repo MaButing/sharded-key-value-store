@@ -104,7 +104,7 @@ struct op_t
 		type = str.substr(0,pos0);
 
 		int pos1 = str.find(":", pos0+1);
-		ip_str = stoi(str.substr(pos0+1, pos1-pos0-1));
+		ip_str = str.substr(pos0+1, pos1-pos0-1);
 
 		int pos2 = str.find(":", pos1+1);
 		port = stoi(str.substr(pos1+1, pos2-pos1-1));
